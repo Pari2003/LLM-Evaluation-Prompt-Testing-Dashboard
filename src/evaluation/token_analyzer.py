@@ -50,9 +50,12 @@ class TokenAnalyzer:
 
         # Verbosity score: 1.0 means response and reference are the same length.
         # > 1.0 means response is more verbose, < 1.0 means more concise.
-        ref_len = len(reference_answer.split()) if reference_answer else 1
-        resp_len = len(response_text.split()) if response_text else 0
-        verbosity_score = resp_len / ref_len if ref_len > 0 else 0.0
+        if not reference_answer:
+            verbosity_score = 0.0
+        else:
+            ref_len = len(reference_answer.split())
+            resp_len = len(response_text.split()) if response_text else 0
+            verbosity_score = resp_len / ref_len if ref_len > 0 else 0.0
 
         metrics = TokenMetrics(
             prompt_tokens=prompt_tokens,
