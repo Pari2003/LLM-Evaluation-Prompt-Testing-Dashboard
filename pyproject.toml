@@ -1,0 +1,22 @@
+[project]
+name = "llm-evaluation-dashboard"
+version = "1.0.0"
+description = "FastAPI-based LLM evaluation platform for benchmarking responses on latency, token efficiency, and hallucination behavior across controlled experiments"
+authors = [{name = "Maitraiyee Bhatt", email = "maitraiyeebhatt@gmail.com"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]

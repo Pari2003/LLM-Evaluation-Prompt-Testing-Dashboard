@@ -1,0 +1,40 @@
+# ─── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ─── Virtual Environments ────────────────────────────────────────
+venv/
+.venv/
+env/
+.env
+
+# ─── IDE ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Testing ─────────────────────────────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ─── Data (generated at runtime) ─────────────────────────────────
+data/eval_db.sqlite
+data/eval_db.sqlite-wal
+data/eval_db.sqlite-shm
+
+# ─── OS ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Ruff ────────────────────────────────────────────────────────
+.ruff_cache/
