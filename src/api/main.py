@@ -59,13 +59,15 @@ app.include_router(datasets.router)
 app.include_router(experiments.router)
 app.include_router(results.router)
 
+from fastapi.staticfiles import StaticFiles
+import os
 
-@app.get("/", tags=["Root"])
-async def root():
-    """Root endpoint with API information."""
-    return {
-        "name": "LLM Evaluation & Prompt Testing Dashboard",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "health": "/api/v1/health/ready",
-    }
+# ─── Static Frontend ───────────────────────────────────────────────────────
+frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend")
+
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+else:
+    @app.get("/", tags=["Root"])
+    async def root():
+        return {"message": "Frontend not built yet. Create frontend/index.html"}

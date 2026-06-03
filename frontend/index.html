@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>LLM Evaluation Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="/index.css" />
+    
+    <!-- React & Babel via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Application Code -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- API Client ---
+        const fetchExperiments = async () => {
+            const res = await fetch('/api/v1/experiments');
+            return await res.json();
+        };
+
+        const fetchExperimentResults = async (id) => {
+            const res = await fetch(`/api/v1/experiments/${id}/results`);
+            if (res.status === 404) return null;
+            return await res.json();
+        };
+
+        // --- Components ---
+        const MetricCard = ({ title, value, colorClass }) => (
+            <div className="panel metric-card">
+                <div className="title">{title}</div>
+                <div className={`value ${colorClass}`}>{value}</div>
+            </div>
+        );
+
+        const ExperimentRow = ({ exp, onSelect }) => {
+            return (
+                <tr style={{ cursor: 'pointer' }} onClick={() => onSelect(exp.id)}>
+                    <td>{exp.name}</td>
+                    <td>{exp.model}</td>
+                    <td><span className="badge">{exp.dataset_id}</span></td>
+                    <td><span className={`badge ${exp.status === 'completed' ? 'success' : ''}`}>{exp.status}</span></td>
+                    <td>{new Date(exp.created_at).toLocaleString()}</td>
+                </tr>
+            );
+        };
+
+        const Dashboard = ({ onSelectExperiment }) => {
+            const [experiments, setExperiments] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                fetchExperiments().then(data => {
+                    setExperiments(data);
+                    setLoading(false);
+                });
+            }, []);
+
+            if (loading) return <div className="spinner"></div>;
+
+            return (
+                <div>
+                    <h2>Recent Experiments</h2>
+                    {experiments.length === 0 ? (
+                        <div className="panel empty-state" style={{marginTop: '20px'}}>
+                            No experiments found. Run an experiment using the CLI.
+                        </div>
+                    ) : (
+                        <div className="panel" style={{marginTop: '20px'}}>
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Model</th>
+                                        <th>Dataset</th>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {experiments.map(exp => (
+                                        <ExperimentRow key={exp.id} exp={exp} onSelect={onSelectExperiment} />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const ExperimentDetail = ({ id, onBack }) => {
+            const [report, setReport] = useState(null);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                fetchExperimentResults(id).then(data => {
+                    setReport(data);
+                    setLoading(false);
+                });
+            }, [id]);
+
+            if (loading) return <div className="spinner"></div>;
+
+            if (!report) {
+                return (
+                    <div>
+                        <button onClick={onBack} style={{background: 'none', border: 'none', color: 'var(--accent-purple)', cursor: 'pointer', marginBottom: '20px'}}>← Back to Dashboard</button>
+                        <div className="panel empty-state">No results available for this experiment yet.</div>
+                    </div>
+                );
+            }
+
+            return (
+                <div>
+                    <button onClick={onBack} style={{background: 'none', border: 'none', color: 'var(--accent-purple)', cursor: 'pointer', marginBottom: '20px', fontSize: '14px', fontWeight: '500'}}>← Back to Dashboard</button>
+                    
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px'}}>
+                        <div>
+                            <h2>Results: {report.experiment_id}</h2>
+                            <p style={{color: 'var(--text-muted)', marginTop: '8px'}}>Completed at {new Date(report.completed_at).toLocaleString()}</p>
+                        </div>
+                        <div style={{textAlign: 'right'}}>
+                            <div style={{fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase'}}>Overall Winner</div>
+                            <div style={{fontSize: '24px', fontWeight: 'bold', color: 'var(--accent-emerald)'}}>{report.winner_prompt_id || 'Tie / None'}</div>
+                        </div>
+                    </div>
+
+                    <h3 style={{marginBottom: '16px', marginTop: '32px'}}>Prompt Variants Performance</h3>
+                    <div className="grid-3">
+                        {report.variant_reports.map(variant => (
+                            <div key={variant.prompt_id} className="panel" style={variant.prompt_id === report.winner_prompt_id ? {borderColor: 'var(--accent-emerald)', boxShadow: '0 0 20px rgba(16,185,129,0.1)'} : {}}>
+                                <h3 style={{marginBottom: '16px', color: variant.prompt_id === report.winner_prompt_id ? 'var(--accent-emerald)' : 'white'}}>
+                                    Variant: {variant.prompt_id}
+                                    {variant.prompt_id === report.winner_prompt_id && <span style={{marginLeft: '8px'}}>👑</span>}
+                                </h3>
+                                
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span style={{color: 'var(--text-muted)'}}>Composite Score:</span>
+                                        <span style={{fontWeight: 'bold'}}>{variant.metrics.composite_score.toFixed(3)}</span>
+                                    </div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span style={{color: 'var(--text-muted)'}}>Avg Latency (s):</span>
+                                        <span>{variant.metrics.avg_latency_ms > 0 ? (variant.metrics.avg_latency_ms/1000).toFixed(2) : 0}</span>
+                                    </div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span style={{color: 'var(--text-muted)'}}>Token Efficiency:</span>
+                                        <span>{variant.metrics.avg_token_efficiency.toFixed(3)}</span>
+                                    </div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span style={{color: 'var(--text-muted)'}}>Hallucination Rate:</span>
+                                        <span style={{color: variant.metrics.hallucination_rate > 0.5 ? 'var(--accent-rose)' : 'inherit'}}>{(variant.metrics.hallucination_rate * 100).toFixed(1)}%</span>
+                                    </div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span style={{color: 'var(--text-muted)'}}>Success Rate:</span>
+                                        <span>{(variant.metrics.success_rate * 100).toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [selectedExperimentId, setSelectedExperimentId] = useState(null);
+
+            return (
+                <div className="app-container">
+                    <header className="header">
+                        <h1>LLM Evaluation Platform</h1>
+                        <span className="badge">v1.0.0</span>
+                    </header>
+
+                    <main>
+                        {selectedExperimentId ? (
+                            <ExperimentDetail id={selectedExperimentId} onBack={() => setSelectedExperimentId(null)} />
+                        ) : (
+                            <Dashboard onSelectExperiment={setSelectedExperimentId} />
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const rootElement = document.getElementById("root");
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(<App />);
+    </script>
+</body>
+</html>
