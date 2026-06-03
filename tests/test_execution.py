@@ -227,10 +227,10 @@ def main():
     for test_fn in tests:
         try:
             test_fn()
-            print(f"  ✓ {test_fn.__name__}")
+            print(f"  [PASS] {test_fn.__name__}")
             passed += 1
         except Exception as e:
-            print(f"  ✗ {test_fn.__name__}: {e}")
+            print(f"  [FAIL] {test_fn.__name__}: {e}")
             failed += 1
 
     print(f"\n{'='*50}")

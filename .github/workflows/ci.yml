@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Lint with Ruff
+        run: |
+          ruff check src/ tests/ scripts/ --output-format=github
+
+      - name: Validate imports and schemas
+        env:
+          PYTHONPATH: .
+        run: |
+          python -c "from src.config import Settings; print('Config OK')"
+          python -c "from src.models.schemas import Experiment, ExperimentReport, RunResult; print('Schemas OK')"
+          python -c "from src.models.llm_client import OllamaClient; print('LLM Client OK')"
+          python -c "from src.evaluation.composite_scorer import CompositeScorer; print('Composite Scorer OK')"
+          python -c "from src.evaluation.hallucination_checker import HallucinationChecker; print('Hallucination Checker OK')"
+          python -c "from src.execution.result_aggregator import ResultAggregator; print('Result Aggregator OK')"
+          python -c "from src.storage.database import Database; print('Database OK')"
+
+      - name: Run schema tests
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m tests.test_schemas
+
+      - name: Run evaluation module tests
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m tests.test_evaluation
+
+      - name: Run storage tests
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m tests.test_storage
+
+      - name: Run execution pipeline tests
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m tests.test_execution

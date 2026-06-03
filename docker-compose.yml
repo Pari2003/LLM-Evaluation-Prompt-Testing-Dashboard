@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  # ─── Ollama LLM Server ──────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama_eval
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+    restart: unless-stopped
+
+  # ─── Evaluation Dashboard API ───────────────────────────
+  app:
+    build: .
+    container_name: llm_eval_app
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - SQLITE_PATH=/app/data/eval_db.sqlite
+    volumes:
+      - app_data:/app/data
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  app_data:
