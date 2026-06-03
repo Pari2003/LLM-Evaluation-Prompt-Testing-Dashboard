@@ -23,7 +23,6 @@ import time
 from typing import Any, Optional
 
 import httpx
-import numpy as np
 import structlog
 
 from src.config import settings

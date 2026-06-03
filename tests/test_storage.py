@@ -7,22 +7,18 @@ and FTS5 search functionality.
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 from src.models.schemas import (
-    EvaluationConfig,
     Experiment,
     ExperimentReport,
     ExperimentStatus,
     LatencyMetrics,
     PromptTemplate,
     RunResult,
-    RunStatus,
     TestCase,
     TestDataset,
     TokenMetrics,
-    VariantReport,
 )
 from src.storage.database import Database
 

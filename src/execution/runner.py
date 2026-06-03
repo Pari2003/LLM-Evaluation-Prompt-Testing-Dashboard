@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Optional
 
 import structlog
 
@@ -35,11 +34,11 @@ from src.models.llm_client import OllamaClient
 from src.models.schemas import (
     Experiment,
     ExperimentStatus,
+    PromptTemplate,
     RunResult,
     RunStatus,
     TestCase,
     TestDataset,
-    PromptTemplate,
     utc_now,
 )
 from src.storage.database import Database

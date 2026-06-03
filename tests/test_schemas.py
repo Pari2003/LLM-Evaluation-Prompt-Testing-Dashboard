@@ -8,17 +8,13 @@ default values, computed properties, and field validation.
 from __future__ import annotations
 
 from src.models.schemas import (
-    Claim,
-    ClaimVerification,
     ConsistencyReport,
     CreateDatasetRequest,
     CreateExperimentRequest,
-    DatasetSummary,
     EvaluationConfig,
     Experiment,
     ExperimentReport,
     ExperimentStatus,
-    ExperimentSummary,
     HallucinationReport,
     LatencyMetrics,
     MetricSummary,
@@ -30,7 +26,6 @@ from src.models.schemas import (
     TestDataset,
     TokenMetrics,
     VariantReport,
-    WinRateEntry,
     generate_id,
     utc_now,
 )

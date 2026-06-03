@@ -13,25 +13,14 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import json
-import sys
-from pathlib import Path
 
 import click
 from rich.console import Console
 from rich.table import Table
 
-from src.config import settings
 from src.execution.result_aggregator import ResultAggregator
 from src.execution.runner import ExperimentRunner
 from src.models.llm_client import OllamaClient
-from src.models.schemas import (
-    EvaluationConfig,
-    Experiment,
-    PromptTemplate,
-    TestCase,
-    TestDataset,
-)
 from src.storage.database import Database
 
 console = Console()
@@ -239,10 +228,10 @@ def run_experiment(experiment_id: str):
         await llm_client.close()
         return report
 
-    report = asyncio.run(_run())
+    asyncio.run(_run())
     db.close()
 
-    console.print(f"\n[green]Experiment completed![/green]")
+    console.print("\n[green]Experiment completed![/green]")
     console.print(f"Use [bold]show-results {experiment_id}[/bold] to view the report.")
 
 

@@ -19,7 +19,6 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import sqlite3
 from pathlib import Path
 from typing import Optional
@@ -35,7 +34,6 @@ from src.models.schemas import (
     ExperimentSummary,
     RunResult,
     TestDataset,
-    VariantReport,
 )
 
 logger = structlog.get_logger(__name__)
