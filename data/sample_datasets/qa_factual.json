@@ -1,0 +1,92 @@
+[
+  {
+    "input_variables": {"question": "What is retrieval-augmented generation (RAG)?"},
+    "reference_answer": "Retrieval-augmented generation (RAG) is a technique that combines information retrieval with text generation. It retrieves relevant documents from a knowledge base and uses them as context for generating accurate, grounded responses.",
+    "reference_context": "Retrieval-Augmented Generation (RAG) enhances language model outputs by first retrieving relevant passages from a corpus, then conditioning the generation on these retrieved documents. This approach reduces hallucination and improves factual accuracy.",
+    "tags": ["definition", "rag"]
+  },
+  {
+    "input_variables": {"question": "What are the main components of a transformer architecture?"},
+    "reference_answer": "The main components of a transformer architecture are the self-attention mechanism, multi-head attention, feed-forward neural networks, positional encodings, and layer normalization. The architecture consists of an encoder and decoder, each with multiple layers.",
+    "reference_context": "The Transformer architecture introduced by Vaswani et al. consists of an encoder and decoder, each composed of stacked layers. Each layer contains a multi-head self-attention mechanism and a position-wise feed-forward network, with residual connections and layer normalization.",
+    "tags": ["architecture", "transformer"]
+  },
+  {
+    "input_variables": {"question": "Explain the difference between fine-tuning and prompt engineering."},
+    "reference_answer": "Fine-tuning involves updating model weights on task-specific data to adapt a pre-trained model, while prompt engineering designs input prompts to guide the model's behavior without modifying its weights. Fine-tuning is more resource-intensive but can achieve better task-specific performance.",
+    "reference_context": "Fine-tuning adapts a pre-trained model by continuing training on labeled data for a specific task, modifying model parameters. Prompt engineering, in contrast, crafts input text to elicit desired outputs from a frozen model, requiring no gradient updates.",
+    "tags": ["fine-tuning", "prompt-engineering"]
+  },
+  {
+    "input_variables": {"question": "What is the purpose of temperature in LLM generation?"},
+    "reference_answer": "Temperature controls the randomness of LLM output. Lower temperatures (near 0) make the model more deterministic and confident, selecting high-probability tokens. Higher temperatures increase diversity and creativity but may reduce coherence.",
+    "reference_context": "The temperature parameter in language model sampling scales the logits before applying softmax. A temperature of 0 yields greedy decoding (always selecting the most probable token), while higher temperatures flatten the probability distribution, increasing output diversity.",
+    "tags": ["generation", "temperature"]
+  },
+  {
+    "input_variables": {"question": "What is hallucination in the context of large language models?"},
+    "reference_answer": "Hallucination in LLMs refers to the generation of content that is factually incorrect, fabricated, or not supported by the input context. This includes generating plausible-sounding but false information, incorrect citations, or made-up facts.",
+    "reference_context": "LLM hallucination occurs when models generate text that is nonsensical or unfaithful to the provided source. This includes intrinsic hallucinations (contradicting the source) and extrinsic hallucinations (adding unverifiable information not present in the source).",
+    "tags": ["hallucination", "safety"]
+  },
+  {
+    "input_variables": {"question": "What is the attention mechanism and why is it important?"},
+    "reference_answer": "The attention mechanism allows a model to focus on different parts of the input sequence when producing each output element. It computes weighted sums of values based on the compatibility between queries and keys, enabling the model to capture long-range dependencies.",
+    "reference_context": "Attention mechanisms compute alignment scores between query and key vectors to produce weighted combinations of value vectors. Scaled dot-product attention divides the dot product by the square root of the key dimension to prevent gradient vanishing in softmax.",
+    "tags": ["attention", "transformer"]
+  },
+  {
+    "input_variables": {"question": "What are embeddings and how are they used in NLP?"},
+    "reference_answer": "Embeddings are dense vector representations of text (words, sentences, or documents) in a continuous vector space. They capture semantic meaning, allowing similar texts to have similar vector representations. They are used for similarity search, clustering, classification, and as inputs to neural networks.",
+    "reference_context": "Word and sentence embeddings map discrete text tokens into continuous vector spaces where semantic similarity is captured by geometric proximity. Pre-trained embeddings like Word2Vec, GloVe, and contextual embeddings from BERT enable transfer learning across NLP tasks.",
+    "tags": ["embeddings", "nlp"]
+  },
+  {
+    "input_variables": {"question": "What is the difference between zero-shot and few-shot learning in LLMs?"},
+    "reference_answer": "Zero-shot learning asks the model to perform a task without any examples, relying on its pre-trained knowledge. Few-shot learning provides a small number of examples in the prompt to demonstrate the desired behavior, improving task performance without fine-tuning.",
+    "reference_context": "In zero-shot prompting, models receive only a task description. Few-shot prompting includes demonstrations (input-output pairs) in the context window. GPT-3 demonstrated that larger models exhibit stronger few-shot performance, sometimes matching fine-tuned models.",
+    "tags": ["zero-shot", "few-shot", "prompting"]
+  },
+  {
+    "input_variables": {"question": "What is chain-of-thought prompting?"},
+    "reference_answer": "Chain-of-thought (CoT) prompting is a technique that encourages LLMs to break down complex reasoning into intermediate steps before arriving at a final answer. This improves performance on tasks requiring multi-step reasoning, arithmetic, and logical deduction.",
+    "reference_context": "Chain-of-thought prompting elicits step-by-step reasoning from language models by including intermediate reasoning examples in the prompt. Wei et al. showed that CoT significantly improves performance on arithmetic, commonsense, and symbolic reasoning benchmarks.",
+    "tags": ["chain-of-thought", "reasoning"]
+  },
+  {
+    "input_variables": {"question": "What is RLHF and how does it improve language models?"},
+    "reference_answer": "Reinforcement Learning from Human Feedback (RLHF) is a training technique where human evaluators rank model outputs, and a reward model is trained on these preferences. The language model is then fine-tuned using reinforcement learning to maximize the reward, aligning its outputs with human preferences.",
+    "reference_context": "RLHF trains a reward model on human preference data (pairwise comparisons of model outputs) and uses Proximal Policy Optimization (PPO) to fine-tune the language model against this reward signal. InstructGPT demonstrated that RLHF produces outputs preferred by humans over larger non-RLHF models.",
+    "tags": ["rlhf", "alignment"]
+  },
+  {
+    "input_variables": {"question": "What is tokenization and why does it matter for LLMs?"},
+    "reference_answer": "Tokenization is the process of breaking text into smaller units (tokens) that the model can process. Common methods include BPE, WordPiece, and SentencePiece. Tokenization affects model vocabulary size, input length, multilingual capability, and the ability to handle rare words.",
+    "reference_context": "Subword tokenization algorithms like Byte Pair Encoding (BPE) and WordPiece balance vocabulary size with representation of rare words by splitting infrequent words into subword units. Tokenization directly impacts the effective context length and computational cost of inference.",
+    "tags": ["tokenization", "preprocessing"]
+  },
+  {
+    "input_variables": {"question": "What is model quantization and when is it used?"},
+    "reference_answer": "Model quantization reduces the precision of model weights from higher bit formats (FP32) to lower ones (INT8, INT4) to decrease memory usage and improve inference speed. It is used for deploying large models on resource-constrained hardware with minimal accuracy loss.",
+    "reference_context": "Quantization maps floating-point model parameters to lower-precision representations. Post-training quantization (PTQ) applies quantization after training, while quantization-aware training (QAT) simulates quantization during training for better accuracy preservation.",
+    "tags": ["quantization", "optimization"]
+  },
+  {
+    "input_variables": {"question": "What is the context window in LLMs and why does it matter?"},
+    "reference_answer": "The context window is the maximum number of tokens an LLM can process in a single input. It determines how much text the model can consider at once, affecting its ability to handle long documents, maintain conversation history, and process complex prompts.",
+    "reference_context": "Transformer context length is bounded by the quadratic memory complexity of self-attention. Techniques like rotary position embeddings (RoPE), ALiBi, and sparse attention patterns extend effective context lengths beyond the original training window.",
+    "tags": ["context-window", "architecture"]
+  },
+  {
+    "input_variables": {"question": "What is the difference between encoder-only and decoder-only transformer models?"},
+    "reference_answer": "Encoder-only models like BERT process the full input bidirectionally and are used for classification and understanding tasks. Decoder-only models like GPT generate text autoregressively, processing tokens left-to-right, and are used for text generation tasks.",
+    "reference_context": "Encoder-only transformers (BERT, RoBERTa) use bidirectional self-attention for representation learning. Decoder-only transformers (GPT series) use causal (masked) self-attention for autoregressive generation. Encoder-decoder models (T5, BART) combine both for sequence-to-sequence tasks.",
+    "tags": ["architecture", "encoder", "decoder"]
+  },
+  {
+    "input_variables": {"question": "What is knowledge distillation in the context of LLMs?"},
+    "reference_answer": "Knowledge distillation trains a smaller student model to mimic the behavior of a larger teacher model. The student learns from the teacher's soft probability distributions rather than hard labels, capturing the teacher's learned knowledge in a more compact model.",
+    "reference_context": "Knowledge distillation transfers knowledge from a large teacher model to a smaller student by training the student to match the teacher's output distribution. Hinton et al. showed that soft targets contain more information than hard labels, enabling smaller models to achieve competitive performance.",
+    "tags": ["distillation", "compression"]
+  }
+]
