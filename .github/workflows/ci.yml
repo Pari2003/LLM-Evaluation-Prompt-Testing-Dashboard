@@ -50,7 +50,7 @@ jobs:
           python -c "from src.models.providers.factory import create_provider; print('Factory OK')"
           python -c "from src.evaluation.composite_scorer import CompositeScorer; print('Composite Scorer OK')"
           python -c "from src.evaluation.hallucination_checker import HallucinationChecker; print('Hallucination Checker OK')"
-          python -c "from src.evaluation.significance import WelchsTTest; print('Significance Testing OK')"
+          python -c "from src.evaluation.significance import welch_t_test; print('Significance Testing OK')"
           python -c "from src.execution.result_aggregator import ResultAggregator; print('Result Aggregator OK')"
           python -c "from src.storage.database import Database; print('Database OK')"
 
