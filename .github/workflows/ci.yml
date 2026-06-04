@@ -46,9 +46,11 @@ jobs:
         run: |
           python -c "from src.config import Settings; print('Config OK')"
           python -c "from src.models.schemas import Experiment, ExperimentReport, RunResult; print('Schemas OK')"
-          python -c "from src.models.llm_client import OllamaClient; print('LLM Client OK')"
+          python -c "from src.models.providers.base import LLMProvider; print('LLM Provider OK')"
+          python -c "from src.models.providers.factory import create_provider; print('Factory OK')"
           python -c "from src.evaluation.composite_scorer import CompositeScorer; print('Composite Scorer OK')"
           python -c "from src.evaluation.hallucination_checker import HallucinationChecker; print('Hallucination Checker OK')"
+          python -c "from src.evaluation.significance import WelchsTTest; print('Significance Testing OK')"
           python -c "from src.execution.result_aggregator import ResultAggregator; print('Result Aggregator OK')"
           python -c "from src.storage.database import Database; print('Database OK')"
 
@@ -75,3 +77,21 @@ jobs:
           PYTHONPATH: .
         run: |
           python -m tests.test_execution
+
+      - name: Run hallucination module tests
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m tests.test_hallucination
+
+      - name: Run statistical significance tests
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m tests.test_significance
+
+      - name: Run concurrency tests
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m tests.test_concurrency
