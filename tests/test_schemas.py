@@ -263,7 +263,7 @@ def main():
             print(f"  [FAIL] {test_fn.__name__}: {e}")
             failed += 1
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Schema Tests: {passed} passed, {failed} failed out of {len(tests)}")
     if failed > 0:
         exit(1)

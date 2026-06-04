@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 import structlog
 
-from src.models.llm_client import OllamaClient
+from src.models.providers.base import LLMProvider
 from src.models.schemas import SemanticScore
 
 logger = structlog.get_logger(__name__)
@@ -24,7 +24,7 @@ logger = structlog.get_logger(__name__)
 class SemanticScorer:
     """Evaluates response quality using embedding similarity and LLM-as-Judge scoring."""
 
-    def __init__(self, llm_client: OllamaClient):
+    def __init__(self, llm_client: LLMProvider):
         self.llm_client = llm_client
 
     async def score(
@@ -59,15 +59,11 @@ class SemanticScorer:
         judge_average = 0.0
 
         if enable_llm_judge:
-            judge_scores = await self._run_llm_judge(
-                question, response_text, reference_answer
-            )
+            judge_scores = await self._run_llm_judge(question, response_text, reference_answer)
             judge_relevance = judge_scores.get("relevance", 0.0)
             judge_correctness = judge_scores.get("correctness", 0.0)
             judge_coherence = judge_scores.get("coherence", 0.0)
-            judge_average = round(
-                (judge_relevance + judge_correctness + judge_coherence) / 3, 2
-            )
+            judge_average = round((judge_relevance + judge_correctness + judge_coherence) / 3, 2)
 
         score = SemanticScore(
             embedding_similarity=round(embedding_sim, 4),

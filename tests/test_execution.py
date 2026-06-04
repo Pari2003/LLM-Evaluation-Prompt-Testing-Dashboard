@@ -53,82 +53,122 @@ def create_mock_results() -> tuple[Experiment, TestDataset, list[RunResult]]:
     results = [
         # t1, tc1, rep1
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t1",
-            prompt_template_name="concise", test_case_id="tc1", repetition=1,
+            experiment_id="exp_mock",
+            prompt_template_id="t1",
+            prompt_template_name="concise",
+            test_case_id="tc1",
+            repetition=1,
             response_text="AI is artificial intelligence.",
             latency=LatencyMetrics(total_ms=500.0, tokens_per_second=40.0),
-            tokens=TokenMetrics(prompt_tokens=50, completion_tokens=20, total_tokens=70, verbosity_score=1.0),
+            tokens=TokenMetrics(
+                prompt_tokens=50, completion_tokens=20, total_tokens=70, verbosity_score=1.0
+            ),
             semantic=SemanticScore(embedding_similarity=0.92, judge_average=4.5),
             hallucination=HallucinationReport(hallucination_rate=0.0),
             consistency=ConsistencyReport(agreement_rate=0.95),
         ),
         # t1, tc1, rep2
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t1",
-            prompt_template_name="concise", test_case_id="tc1", repetition=2,
+            experiment_id="exp_mock",
+            prompt_template_id="t1",
+            prompt_template_name="concise",
+            test_case_id="tc1",
+            repetition=2,
             response_text="AI is artificial intelligence technology.",
             latency=LatencyMetrics(total_ms=480.0, tokens_per_second=42.0),
-            tokens=TokenMetrics(prompt_tokens=50, completion_tokens=22, total_tokens=72, verbosity_score=1.1),
+            tokens=TokenMetrics(
+                prompt_tokens=50, completion_tokens=22, total_tokens=72, verbosity_score=1.1
+            ),
             semantic=SemanticScore(embedding_similarity=0.91, judge_average=4.3),
             hallucination=HallucinationReport(hallucination_rate=0.0),
             consistency=ConsistencyReport(agreement_rate=0.95),
         ),
         # t1, tc2, rep1
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t1",
-            prompt_template_name="concise", test_case_id="tc2", repetition=1,
+            experiment_id="exp_mock",
+            prompt_template_id="t1",
+            prompt_template_name="concise",
+            test_case_id="tc2",
+            repetition=1,
             response_text="ML is machine learning.",
             latency=LatencyMetrics(total_ms=450.0, tokens_per_second=44.0),
-            tokens=TokenMetrics(prompt_tokens=50, completion_tokens=18, total_tokens=68, verbosity_score=0.9),
+            tokens=TokenMetrics(
+                prompt_tokens=50, completion_tokens=18, total_tokens=68, verbosity_score=0.9
+            ),
             semantic=SemanticScore(embedding_similarity=0.89, judge_average=4.0),
         ),
         # t1, tc2, rep2
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t1",
-            prompt_template_name="concise", test_case_id="tc2", repetition=2,
+            experiment_id="exp_mock",
+            prompt_template_id="t1",
+            prompt_template_name="concise",
+            test_case_id="tc2",
+            repetition=2,
             response_text="ML is a subset of AI.",
             latency=LatencyMetrics(total_ms=460.0, tokens_per_second=43.0),
-            tokens=TokenMetrics(prompt_tokens=50, completion_tokens=19, total_tokens=69, verbosity_score=0.95),
+            tokens=TokenMetrics(
+                prompt_tokens=50, completion_tokens=19, total_tokens=69, verbosity_score=0.95
+            ),
             semantic=SemanticScore(embedding_similarity=0.88, judge_average=4.2),
         ),
         # t2, tc1, rep1 — worse performance
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t2",
-            prompt_template_name="detailed", test_case_id="tc1", repetition=1,
+            experiment_id="exp_mock",
+            prompt_template_id="t2",
+            prompt_template_name="detailed",
+            test_case_id="tc1",
+            repetition=1,
             response_text="Artificial intelligence is a broad field...",
             latency=LatencyMetrics(total_ms=1200.0, tokens_per_second=25.0),
-            tokens=TokenMetrics(prompt_tokens=80, completion_tokens=100, total_tokens=180, verbosity_score=2.5),
+            tokens=TokenMetrics(
+                prompt_tokens=80, completion_tokens=100, total_tokens=180, verbosity_score=2.5
+            ),
             semantic=SemanticScore(embedding_similarity=0.80, judge_average=3.5),
             hallucination=HallucinationReport(hallucination_rate=0.1),
             consistency=ConsistencyReport(agreement_rate=0.8),
         ),
         # t2, tc1, rep2
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t2",
-            prompt_template_name="detailed", test_case_id="tc1", repetition=2,
+            experiment_id="exp_mock",
+            prompt_template_id="t2",
+            prompt_template_name="detailed",
+            test_case_id="tc1",
+            repetition=2,
             response_text="AI encompasses many subfields...",
             latency=LatencyMetrics(total_ms=1300.0, tokens_per_second=23.0),
-            tokens=TokenMetrics(prompt_tokens=80, completion_tokens=110, total_tokens=190, verbosity_score=2.8),
+            tokens=TokenMetrics(
+                prompt_tokens=80, completion_tokens=110, total_tokens=190, verbosity_score=2.8
+            ),
             semantic=SemanticScore(embedding_similarity=0.78, judge_average=3.3),
             hallucination=HallucinationReport(hallucination_rate=0.15),
             consistency=ConsistencyReport(agreement_rate=0.8),
         ),
         # t2, tc2, rep1
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t2",
-            prompt_template_name="detailed", test_case_id="tc2", repetition=1,
+            experiment_id="exp_mock",
+            prompt_template_id="t2",
+            prompt_template_name="detailed",
+            test_case_id="tc2",
+            repetition=1,
             response_text="Machine learning is a methodology...",
             latency=LatencyMetrics(total_ms=1100.0, tokens_per_second=26.0),
-            tokens=TokenMetrics(prompt_tokens=80, completion_tokens=90, total_tokens=170, verbosity_score=2.2),
+            tokens=TokenMetrics(
+                prompt_tokens=80, completion_tokens=90, total_tokens=170, verbosity_score=2.2
+            ),
             semantic=SemanticScore(embedding_similarity=0.82, judge_average=3.8),
         ),
         # t2, tc2, rep2
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t2",
-            prompt_template_name="detailed", test_case_id="tc2", repetition=2,
+            experiment_id="exp_mock",
+            prompt_template_id="t2",
+            prompt_template_name="detailed",
+            test_case_id="tc2",
+            repetition=2,
             response_text="ML involves training algorithms...",
             latency=LatencyMetrics(total_ms=1150.0, tokens_per_second=24.0),
-            tokens=TokenMetrics(prompt_tokens=80, completion_tokens=95, total_tokens=175, verbosity_score=2.4),
+            tokens=TokenMetrics(
+                prompt_tokens=80, completion_tokens=95, total_tokens=175, verbosity_score=2.4
+            ),
             semantic=SemanticScore(embedding_similarity=0.81, judge_average=3.6),
         ),
     ]
@@ -198,8 +238,11 @@ def test_failed_runs_handling():
     # Add a failed run
     results.append(
         RunResult(
-            experiment_id="exp_mock", prompt_template_id="t1",
-            prompt_template_name="concise", test_case_id="tc1", repetition=3,
+            experiment_id="exp_mock",
+            prompt_template_id="t1",
+            prompt_template_name="concise",
+            test_case_id="tc1",
+            repetition=3,
             status=RunStatus.ERROR,
             error_message="Timeout",
         )
@@ -233,7 +276,7 @@ def main():
             print(f"  [FAIL] {test_fn.__name__}: {e}")
             failed += 1
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Execution Tests: {passed} passed, {failed} failed out of {len(tests)}")
     if failed > 0:
         exit(1)

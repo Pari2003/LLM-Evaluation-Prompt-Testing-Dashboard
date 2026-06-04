@@ -44,9 +44,7 @@ class TokenAnalyzer:
         total_tokens = prompt_tokens + completion_tokens
 
         # Output/input ratio — how many output tokens per input token
-        output_input_ratio = (
-            completion_tokens / prompt_tokens if prompt_tokens > 0 else 0.0
-        )
+        output_input_ratio = completion_tokens / prompt_tokens if prompt_tokens > 0 else 0.0
 
         # Verbosity score: 1.0 means response and reference are the same length.
         # > 1.0 means response is more verbose, < 1.0 means more concise.

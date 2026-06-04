@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 class ExperimentStatus(str, Enum):
     """Lifecycle status of an experiment."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -33,6 +34,7 @@ class ExperimentStatus(str, Enum):
 
 class EntailmentResult(str, Enum):
     """NLI entailment classification for hallucination checking."""
+
     SUPPORTS = "supports"
     CONTRADICTS = "contradicts"
     NEUTRAL = "neutral"
@@ -40,6 +42,7 @@ class EntailmentResult(str, Enum):
 
 class RunStatus(str, Enum):
     """Status of an individual experiment run."""
+
     SUCCESS = "success"
     TIMEOUT = "timeout"
     ERROR = "error"
@@ -69,6 +72,7 @@ class PromptTemplate(BaseModel):
         template: "Answer the following question concisely:\n\nQuestion: {question}\nAnswer:"
         variables: ["question"]
     """
+
     id: str = Field(default_factory=generate_id)
     name: str = Field(..., min_length=1, max_length=200)
     template: str = Field(..., min_length=1)
@@ -88,6 +92,7 @@ class TestCase(BaseModel):
     The `reference_answer` is the ground-truth used for semantic comparison and hallucination checks.
     The optional `reference_context` provides source material for fact verification.
     """
+
     id: str = Field(default_factory=generate_id)
     input_variables: dict[str, str] = Field(..., min_length=1)
     reference_answer: str = Field(..., min_length=1)
@@ -98,6 +103,7 @@ class TestCase(BaseModel):
 
 class TestDataset(BaseModel):
     """A named collection of test cases for benchmarking prompt variants."""
+
     id: str = Field(default_factory=generate_id)
     name: str = Field(..., min_length=1, max_length=200)
     description: str = ""
@@ -124,6 +130,7 @@ class EvaluationConfig(BaseModel):
         enable_consistency_check: Whether to compute cross-run consistency metrics.
         enable_llm_judge: Whether to use LLM-as-Judge for semantic quality scoring.
     """
+
     repetitions: int = Field(default=3, ge=1, le=20)
     temperature: float = Field(default=0.1, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2048, ge=64, le=8192)
@@ -140,6 +147,7 @@ class Experiment(BaseModel):
     - A test dataset (inputs + expected outputs)
     - An evaluation config (how to run and what to measure)
     """
+
     id: str = Field(default_factory=generate_id)
     name: str = Field(..., min_length=1, max_length=200)
     description: str = ""
@@ -167,6 +175,7 @@ class LatencyMetrics(BaseModel):
         total_ms: Total wall-clock time from request to full response.
         tokens_per_second: Generation throughput (completion tokens / generation time).
     """
+
     total_ms: float = 0.0
     tokens_per_second: float = 0.0
 
@@ -181,6 +190,7 @@ class TokenMetrics(BaseModel):
         output_input_ratio: completion_tokens / prompt_tokens.
         verbosity_score: completion length vs reference answer length (1.0 = matched).
     """
+
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
@@ -198,6 +208,7 @@ class SemanticScore(BaseModel):
         judge_coherence: LLM-as-Judge score for coherence and clarity (1-5).
         judge_average: Mean of the three judge scores.
     """
+
     embedding_similarity: float = 0.0
     judge_relevance: float = 0.0
     judge_correctness: float = 0.0
@@ -207,6 +218,7 @@ class SemanticScore(BaseModel):
 
 class Claim(BaseModel):
     """An atomic factual claim extracted from a response for hallucination checking."""
+
     text: str
     source_sentence: str
 
@@ -214,18 +226,28 @@ class Claim(BaseModel):
 class ClaimVerification(BaseModel):
     """Verification result for a single claim against reference context.
 
+    Uses a 3-layer verification approach:
+    Layer 1: Embedding similarity (cosine between claim and reference)
+    Layer 2: NLI entailment (supports/contradicts/neutral via LLM)
+    Layer 3: Keyword/entity overlap (proper nouns and numbers)
+
     Attributes:
         claim: The atomic claim being verified.
         embedding_similarity: Cosine similarity to the closest reference passage.
+        entailment_result: NLI classification (supports, contradicts, neutral).
+        entailment_score: NLI confidence (1.0=supports, 0.5=neutral, 0.0=contradicts).
         keyword_overlap_score: Fraction of key terms found in reference context.
         matched_keywords: Keywords found in the reference.
         missing_keywords: Keywords NOT found in the reference.
-        overall_confidence: Combined confidence (embedding + keyword weighted average).
+        overall_confidence: Combined confidence (embedding + entailment + keyword).
         is_hallucination: Whether this claim is classified as hallucinated.
         explanation: Human-readable explanation of the verification decision.
     """
+
     claim: Claim
     embedding_similarity: float = 0.0
+    entailment_result: EntailmentResult = EntailmentResult.NEUTRAL
+    entailment_score: float = 0.5
     keyword_overlap_score: float = 1.0
     matched_keywords: list[str] = Field(default_factory=list)
     missing_keywords: list[str] = Field(default_factory=list)
@@ -245,6 +267,7 @@ class HallucinationReport(BaseModel):
         claim_verifications: Detailed per-claim verification results.
         overall_confidence: Mean confidence across all claims.
     """
+
     total_claims: int = 0
     verified_claims: int = 0
     hallucinated_claims: int = 0
@@ -263,6 +286,7 @@ class ConsistencyReport(BaseModel):
         semantic_drift: Max deviation from the centroid response embedding.
         agreement_rate: Fraction of run-pairs with similarity above threshold.
     """
+
     num_runs: int = 0
     mean_pairwise_similarity: float = 1.0
     min_pairwise_similarity: float = 1.0
@@ -278,6 +302,7 @@ class RunResult(BaseModel):
 
     Contains the raw response plus all evaluation metrics.
     """
+
     id: str = Field(default_factory=generate_id)
     experiment_id: str
     prompt_template_id: str
@@ -310,6 +335,7 @@ class MetricSummary(BaseModel):
 
     Used by VariantReport to summarize each metric dimension.
     """
+
     mean: float = 0.0
     median: float = 0.0
     stddev: float = 0.0
@@ -323,6 +349,7 @@ class VariantReport(BaseModel):
 
     Groups all RunResults for one prompt template and computes statistical summaries.
     """
+
     prompt_template_id: str
     prompt_template_name: str
     num_runs: int = 0
@@ -346,6 +373,7 @@ class VariantReport(BaseModel):
 
 class WinRateEntry(BaseModel):
     """Head-to-head win rate between two prompt variants."""
+
     variant_a: str
     variant_b: str
     variant_a_wins: int = 0
@@ -355,11 +383,46 @@ class WinRateEntry(BaseModel):
     variant_a_win_rate: float = 0.0
 
 
+class SignificanceTest(BaseModel):
+    """Statistical significance test result between two prompt variants.
+
+    Uses Welch's t-test to determine if the difference in composite scores
+    between two variants is statistically significant (not due to random chance).
+
+    Attributes:
+        variant_a: Name of the first variant (higher-ranked).
+        variant_b: Name of the second variant (lower-ranked).
+        mean_a: Mean composite score for variant A.
+        mean_b: Mean composite score for variant B.
+        t_statistic: The t-test statistic.
+        degrees_of_freedom: Welch-Satterthwaite degrees of freedom.
+        p_value: Two-tailed p-value.
+        significant: Whether p < 0.05 (the difference is real, not noise).
+        effect_size: Cohen's d effect size.
+        effect_magnitude: Human-readable magnitude (negligible/small/medium/large).
+        interpretation: Full human-readable sentence explaining the result.
+    """
+
+    variant_a: str
+    variant_b: str
+    mean_a: float = 0.0
+    mean_b: float = 0.0
+    t_statistic: float = 0.0
+    degrees_of_freedom: float = 0.0
+    p_value: float = 1.0
+    significant: bool = False
+    effect_size: float = 0.0
+    effect_magnitude: str = "negligible"
+    interpretation: str = ""
+
+
 class ExperimentReport(BaseModel):
     """Complete comparison report across all prompt variants in an experiment.
 
-    Contains per-variant summaries, head-to-head win rates, and final rankings.
+    Contains per-variant summaries, head-to-head win rates, statistical
+    significance tests, and final rankings.
     """
+
     experiment_id: str
     experiment_name: str
     dataset_name: str
@@ -368,6 +431,7 @@ class ExperimentReport(BaseModel):
 
     variant_reports: list[VariantReport] = Field(default_factory=list)
     win_rate_matrix: list[WinRateEntry] = Field(default_factory=list)
+    significance_tests: list[SignificanceTest] = Field(default_factory=list)
     rankings: list[dict[str, Any]] = Field(default_factory=list)
 
     generated_at: datetime = Field(default_factory=utc_now)
@@ -378,6 +442,7 @@ class ExperimentReport(BaseModel):
 
 class CreateExperimentRequest(BaseModel):
     """Request body for creating a new experiment."""
+
     name: str = Field(..., min_length=1, max_length=200)
     description: str = ""
     prompt_templates: list[PromptTemplate] = Field(..., min_length=1)
@@ -387,6 +452,7 @@ class CreateExperimentRequest(BaseModel):
 
 class CreateDatasetRequest(BaseModel):
     """Request body for creating a new test dataset."""
+
     name: str = Field(..., min_length=1, max_length=200)
     description: str = ""
     test_cases: list[TestCase] = Field(..., min_length=1)
@@ -394,6 +460,7 @@ class CreateDatasetRequest(BaseModel):
 
 class ExperimentSummary(BaseModel):
     """Lightweight experiment summary for listing endpoints."""
+
     id: str
     name: str
     description: str
@@ -406,6 +473,7 @@ class ExperimentSummary(BaseModel):
 
 class DatasetSummary(BaseModel):
     """Lightweight dataset summary for listing endpoints."""
+
     id: str
     name: str
     description: str

@@ -91,9 +91,7 @@ async def get_experiment(
     """
     experiment = db.get_experiment(experiment_id)
     if not experiment:
-        raise HTTPException(
-            status_code=404, detail=f"Experiment {experiment_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
     return experiment
 
 
@@ -112,9 +110,7 @@ async def delete_experiment(
     """
     deleted = db.delete_experiment(experiment_id)
     if not deleted:
-        raise HTTPException(
-            status_code=404, detail=f"Experiment {experiment_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
 
 
 @router.post("/{experiment_id}/run", status_code=202)
@@ -142,9 +138,7 @@ async def run_experiment(
     """
     experiment = db.get_experiment(experiment_id)
     if not experiment:
-        raise HTTPException(
-            status_code=404, detail=f"Experiment {experiment_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
 
     if experiment.status in (ExperimentStatus.RUNNING, ExperimentStatus.COMPLETED):
         raise HTTPException(
@@ -192,9 +186,7 @@ async def get_experiment_results(
     """
     experiment = db.get_experiment(experiment_id)
     if not experiment:
-        raise HTTPException(
-            status_code=404, detail=f"Experiment {experiment_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
 
     report = db.get_experiment_report(experiment_id)
     if not report:
@@ -252,9 +244,7 @@ async def compare_variants(
                 "avg_judge_score": v.judge_average.mean,
                 "avg_hallucination_rate": v.hallucination_rate.mean,
                 "avg_consistency": v.consistency_agreement.mean,
-                "success_rate": (
-                    v.num_successes / v.num_runs if v.num_runs > 0 else 0.0
-                ),
+                "success_rate": (v.num_successes / v.num_runs if v.num_runs > 0 else 0.0),
             }
             for v in report.variant_reports
         ],

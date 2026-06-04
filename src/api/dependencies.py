@@ -17,14 +17,15 @@ from typing import Optional
 
 from src.execution.result_aggregator import ResultAggregator
 from src.execution.runner import ExperimentRunner
-from src.models.llm_client import OllamaClient
+from src.models.providers.base import LLMProvider
+from src.models.providers.factory import create_provider
 from src.storage.database import Database
 
 # ─── Singleton Instances ──────────────────────────────────────────────────
 # Initialized in the FastAPI lifespan and shared across all requests.
 
 _database: Optional[Database] = None
-_llm_client: Optional[OllamaClient] = None
+_llm_client: Optional[LLMProvider] = None
 _runner: Optional[ExperimentRunner] = None
 _aggregator: Optional[ResultAggregator] = None
 
@@ -33,7 +34,7 @@ def init_dependencies() -> None:
     """Initialize all singleton dependencies. Called during FastAPI startup."""
     global _database, _llm_client, _runner, _aggregator
     _database = Database()
-    _llm_client = OllamaClient()
+    _llm_client = create_provider()
     _runner = ExperimentRunner(_llm_client, _database)
     _aggregator = ResultAggregator()
 
@@ -53,8 +54,8 @@ def get_database() -> Database:
     return _database
 
 
-def get_llm_client() -> OllamaClient:
-    """FastAPI dependency: get the shared OllamaClient instance."""
+def get_llm_client() -> LLMProvider:
+    """FastAPI dependency: get the shared LLMProvider instance."""
     assert _llm_client is not None, "LLM client not initialized. Call init_dependencies() first."
     return _llm_client
 

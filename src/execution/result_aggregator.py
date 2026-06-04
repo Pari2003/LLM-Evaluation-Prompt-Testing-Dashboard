@@ -23,12 +23,14 @@ from typing import Any
 import structlog
 
 from src.evaluation.composite_scorer import CompositeScorer
+from src.evaluation.significance import cohens_d, welch_t_test
 from src.models.schemas import (
     Experiment,
     ExperimentReport,
     MetricSummary,
     RunResult,
     RunStatus,
+    SignificanceTest,
     TestDataset,
     VariantReport,
     WinRateEntry,
@@ -83,6 +85,9 @@ class ResultAggregator:
         # ─── Rank variants by composite score ─────────────────────────────
         rankings = self._rank_variants(variant_reports)
 
+        # ─── Statistical significance tests (pairwise) ───────────────
+        significance_tests = self._run_significance_tests(variant_reports, results)
+
         report = ExperimentReport(
             experiment_id=experiment.id,
             experiment_name=experiment.name,
@@ -91,6 +96,7 @@ class ResultAggregator:
             total_test_cases=len(dataset.test_cases),
             variant_reports=variant_reports,
             win_rate_matrix=win_rate_matrix,
+            significance_tests=significance_tests,
             rankings=rankings,
         )
 
@@ -141,14 +147,10 @@ class ResultAggregator:
         judge_vals = [r.semantic.judge_average for r in successful]
 
         halluc_vals = [
-            r.hallucination.hallucination_rate
-            for r in successful
-            if r.hallucination is not None
+            r.hallucination.hallucination_rate for r in successful if r.hallucination is not None
         ]
         consistency_vals = [
-            r.consistency.agreement_rate
-            for r in successful
-            if r.consistency is not None
+            r.consistency.agreement_rate for r in successful if r.consistency is not None
         ]
 
         # Compute composite score for each run
@@ -179,7 +181,9 @@ class ResultAggregator:
             embedding_similarity=self._summarize(emb_sim_vals),
             judge_average=self._summarize(judge_vals),
             hallucination_rate=self._summarize(halluc_vals) if halluc_vals else MetricSummary(),
-            consistency_agreement=self._summarize(consistency_vals) if consistency_vals else MetricSummary(),
+            consistency_agreement=self._summarize(consistency_vals)
+            if consistency_vals
+            else MetricSummary(),
             composite_score=round(avg_composite, 4),
         )
 
@@ -206,7 +210,9 @@ class ResultAggregator:
         # Group successful results by (template_id, test_case_id)
         # For each test_case, compute average embedding_similarity per variant
         variant_test_scores: dict[str, dict[str, float]] = defaultdict(dict)
-        variant_test_counts: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+        variant_test_counts: dict[str, dict[str, list[float]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
 
         for r in results:
             if r.status == RunStatus.SUCCESS:
@@ -286,6 +292,106 @@ class ResultAggregator:
             }
             for idx, v in enumerate(sorted_variants)
         ]
+
+    def _run_significance_tests(
+        self,
+        variant_reports: list[VariantReport],
+        results: list[RunResult],
+    ) -> list[SignificanceTest]:
+        """Run pairwise Welch's t-test between all variant pairs.
+
+        For each pair of variants, computes composite scores per run and
+        tests whether the difference in means is statistically significant.
+
+        This catches cases where variant A has a higher mean score than B,
+        but the difference is within random noise (especially common with
+        small repetition counts like 3-5).
+
+        Args:
+            variant_reports: The per-variant reports (sorted by composite score).
+            results: All run results.
+
+        Returns:
+            List of SignificanceTest objects for each variant pair.
+        """
+        if len(variant_reports) < 2:
+            return []
+
+        # Compute per-run composite scores grouped by variant
+        variant_scores: dict[str, list[float]] = defaultdict(list)
+        for r in results:
+            if r.status == RunStatus.SUCCESS:
+                score = self.composite_scorer.compute(
+                    latency=r.latency,
+                    tokens=r.tokens,
+                    semantic=r.semantic,
+                    hallucination=r.hallucination,
+                    consistency=r.consistency,
+                )
+                variant_scores[r.prompt_template_id].append(score)
+
+        # Sort by mean composite (descending) for pairwise comparison
+        sorted_variants = sorted(
+            variant_reports,
+            key=lambda v: v.composite_score,
+            reverse=True,
+        )
+
+        sig_tests: list[SignificanceTest] = []
+        for va, vb in combinations(sorted_variants, 2):
+            scores_a = variant_scores.get(va.prompt_template_id, [])
+            scores_b = variant_scores.get(vb.prompt_template_id, [])
+
+            if not scores_a or not scores_b:
+                continue
+
+            # Welch's t-test
+            t_result = welch_t_test(scores_a, scores_b)
+
+            # Cohen's d effect size
+            d_value, d_magnitude = cohens_d(scores_a, scores_b)
+
+            # Build interpretation
+            mean_a = statistics.mean(scores_a)
+            mean_b = statistics.mean(scores_b)
+            if t_result["significant"]:
+                interpretation = (
+                    f"'{va.prompt_template_name}' scores significantly higher than "
+                    f"'{vb.prompt_template_name}' "
+                    f"(p={t_result['p_value']:.4f}, Cohen's d={d_value:.2f}, "
+                    f"{d_magnitude} effect). This difference is real, not noise."
+                )
+            else:
+                interpretation = (
+                    f"No significant difference between "
+                    f"'{va.prompt_template_name}' and '{vb.prompt_template_name}' "
+                    f"(p={t_result['p_value']:.4f}). The apparent score difference "
+                    f"({mean_a:.4f} vs {mean_b:.4f}) may be due to random variation."
+                )
+
+            sig_tests.append(
+                SignificanceTest(
+                    variant_a=va.prompt_template_name,
+                    variant_b=vb.prompt_template_name,
+                    mean_a=round(mean_a, 4),
+                    mean_b=round(mean_b, 4),
+                    t_statistic=t_result["t_statistic"],
+                    degrees_of_freedom=t_result["degrees_of_freedom"],
+                    p_value=t_result["p_value"],
+                    significant=t_result["significant"],
+                    effect_size=d_value,
+                    effect_magnitude=d_magnitude,
+                    interpretation=interpretation,
+                )
+            )
+
+        logger.info(
+            "significance_tests_complete",
+            num_tests=len(sig_tests),
+            any_significant=any(t.significant for t in sig_tests),
+        )
+
+        return sig_tests
 
     @staticmethod
     def _summarize(values: list[float]) -> MetricSummary:

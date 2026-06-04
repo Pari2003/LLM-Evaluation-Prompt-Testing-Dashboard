@@ -205,9 +205,7 @@ class Database:
         Raises:
             sqlite3.IntegrityError: If the dataset is referenced by an experiment.
         """
-        cursor = self._conn.execute(
-            "DELETE FROM datasets WHERE id = ?", (dataset_id,)
-        )
+        cursor = self._conn.execute("DELETE FROM datasets WHERE id = ?", (dataset_id,))
         self._conn.commit()
         deleted = cursor.rowcount > 0
         if deleted:
@@ -328,9 +326,11 @@ class Database:
             experiment.status = status
             if started_at:
                 from datetime import datetime
+
                 experiment.started_at = datetime.fromisoformat(started_at)
             if completed_at:
                 from datetime import datetime
+
                 experiment.completed_at = datetime.fromisoformat(completed_at)
             self._conn.execute(
                 "UPDATE experiments SET data_json = ? WHERE id = ?",
@@ -349,9 +349,7 @@ class Database:
         Returns:
             True if the experiment was deleted, False if not found.
         """
-        cursor = self._conn.execute(
-            "DELETE FROM experiments WHERE id = ?", (experiment_id,)
-        )
+        cursor = self._conn.execute("DELETE FROM experiments WHERE id = ?", (experiment_id,))
         self._conn.commit()
         deleted = cursor.rowcount > 0
         if deleted:
@@ -398,9 +396,15 @@ class Database:
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             [
                 (
-                    r.id, r.experiment_id, r.prompt_template_id, r.prompt_template_name,
-                    r.test_case_id, r.repetition, r.status.value,
-                    r.model_dump_json(), r.executed_at.isoformat(),
+                    r.id,
+                    r.experiment_id,
+                    r.prompt_template_id,
+                    r.prompt_template_name,
+                    r.test_case_id,
+                    r.repetition,
+                    r.status.value,
+                    r.model_dump_json(),
+                    r.executed_at.isoformat(),
                 )
                 for r in results
             ],
@@ -423,9 +427,7 @@ class Database:
         ).fetchall()
         return [RunResult.model_validate_json(row["data_json"]) for row in rows]
 
-    def get_variant_results(
-        self, experiment_id: str, prompt_template_id: str
-    ) -> list[RunResult]:
+    def get_variant_results(self, experiment_id: str, prompt_template_id: str) -> list[RunResult]:
         """Retrieve run results for a specific prompt variant within an experiment.
 
         Args:

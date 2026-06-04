@@ -20,7 +20,8 @@ from rich.table import Table
 
 from src.execution.result_aggregator import ResultAggregator
 from src.execution.runner import ExperimentRunner
-from src.models.llm_client import OllamaClient
+from src.models.providers.base import LLMProvider
+from src.models.providers.factory import create_provider
 from src.storage.database import Database
 
 console = Console()
@@ -140,23 +141,31 @@ def show_results(experiment_id: str):
         metrics_table.add_column("Stddev", justify="right")
 
         metrics_table.add_row(
-            "Latency (ms)", f"{v.latency_ms.mean:.1f}",
-            f"{v.latency_ms.median:.1f}", f"{v.latency_ms.p95:.1f}",
+            "Latency (ms)",
+            f"{v.latency_ms.mean:.1f}",
+            f"{v.latency_ms.median:.1f}",
+            f"{v.latency_ms.p95:.1f}",
             f"{v.latency_ms.stddev:.1f}",
         )
         metrics_table.add_row(
-            "Tokens/sec", f"{v.tokens_per_second.mean:.1f}",
-            f"{v.tokens_per_second.median:.1f}", f"{v.tokens_per_second.p95:.1f}",
+            "Tokens/sec",
+            f"{v.tokens_per_second.mean:.1f}",
+            f"{v.tokens_per_second.median:.1f}",
+            f"{v.tokens_per_second.p95:.1f}",
             f"{v.tokens_per_second.stddev:.1f}",
         )
         metrics_table.add_row(
-            "Embedding Sim", f"{v.embedding_similarity.mean:.4f}",
-            f"{v.embedding_similarity.median:.4f}", f"{v.embedding_similarity.p95:.4f}",
+            "Embedding Sim",
+            f"{v.embedding_similarity.mean:.4f}",
+            f"{v.embedding_similarity.median:.4f}",
+            f"{v.embedding_similarity.p95:.4f}",
             f"{v.embedding_similarity.stddev:.4f}",
         )
         metrics_table.add_row(
-            "Judge Avg", f"{v.judge_average.mean:.2f}",
-            f"{v.judge_average.median:.2f}", f"{v.judge_average.p95:.2f}",
+            "Judge Avg",
+            f"{v.judge_average.mean:.2f}",
+            f"{v.judge_average.median:.2f}",
+            f"{v.judge_average.p95:.2f}",
             f"{v.judge_average.stddev:.2f}",
         )
 
@@ -200,7 +209,7 @@ def seed_demo():
 def run_experiment(experiment_id: str):
     """Run an experiment by ID (blocking, with progress output)."""
     db = Database()
-    llm_client = OllamaClient()
+    llm_client: LLMProvider = create_provider()
     runner = ExperimentRunner(llm_client, db)
     aggregator = ResultAggregator()
 
@@ -218,7 +227,9 @@ def run_experiment(experiment_id: str):
     console.print(f"  Variants: {len(experiment.prompt_templates)}")
     console.print(f"  Test cases: {dataset.size}")
     console.print(f"  Repetitions: {experiment.eval_config.repetitions}")
-    console.print(f"  Total runs: {len(experiment.prompt_templates) * dataset.size * experiment.eval_config.repetitions}")
+    console.print(
+        f"  Total runs: {len(experiment.prompt_templates) * dataset.size * experiment.eval_config.repetitions}"
+    )
     console.print()
 
     async def _run():

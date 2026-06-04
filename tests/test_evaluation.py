@@ -22,10 +22,12 @@ from src.models.schemas import (
 def test_latency_analyzer():
     """LatencyAnalyzer should extract metrics from Ollama response data."""
     analyzer = LatencyAnalyzer()
-    metrics = analyzer.analyze({
-        "total_ms": 1234.5,
-        "tokens_per_second": 42.7,
-    })
+    metrics = analyzer.analyze(
+        {
+            "total_ms": 1234.5,
+            "tokens_per_second": 42.7,
+        }
+    )
     assert isinstance(metrics, LatencyMetrics)
     assert metrics.total_ms == 1234.5
     assert metrics.tokens_per_second == 42.7
@@ -144,7 +146,7 @@ def main():
             print(f"  [FAIL] {test_fn.__name__}: {e}")
             failed += 1
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Evaluation Tests: {passed} passed, {failed} failed out of {len(tests)}")
     if failed > 0:
         exit(1)

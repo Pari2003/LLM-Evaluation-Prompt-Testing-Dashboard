@@ -40,9 +40,7 @@ async def get_run_results(
     if not results:
         experiment = db.get_experiment(experiment_id)
         if not experiment:
-            raise HTTPException(
-                status_code=404, detail=f"Experiment {experiment_id} not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
         raise HTTPException(
             status_code=404,
             detail="No run results found. Run the experiment first.",
@@ -97,9 +95,7 @@ async def get_run_stats(
     experiment = db.get_experiment(experiment_id)
 
     if not experiment:
-        raise HTTPException(
-            status_code=404, detail=f"Experiment {experiment_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
 
     status_counts = {}
     for r in results:

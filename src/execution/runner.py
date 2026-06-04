@@ -30,7 +30,7 @@ from src.evaluation.hallucination_checker import HallucinationChecker
 from src.evaluation.latency_analyzer import LatencyAnalyzer
 from src.evaluation.semantic_scorer import SemanticScorer
 from src.evaluation.token_analyzer import TokenAnalyzer
-from src.models.llm_client import OllamaClient
+from src.models.providers.base import LLMProvider
 from src.models.schemas import (
     Experiment,
     ExperimentStatus,
@@ -47,9 +47,9 @@ logger = structlog.get_logger(__name__)
 
 
 class ExperimentRunner:
-    """Executes controlled experiments by running prompt variants against test datasets."""
+    """Orchestrates the execution and evaluation of an experiment."""
 
-    def __init__(self, llm_client: OllamaClient, database: Database):
+    def __init__(self, llm_client: LLMProvider, database: Database):
         self.llm_client = llm_client
         self.database = database
 
@@ -61,9 +61,7 @@ class ExperimentRunner:
         self.consistency_checker = ConsistencyChecker(llm_client)
         self.composite_scorer = CompositeScorer()
 
-    async def run(
-        self, experiment: Experiment, dataset: TestDataset
-    ) -> list[RunResult]:
+    async def run(self, experiment: Experiment, dataset: TestDataset) -> list[RunResult]:
         """Execute an experiment: run all prompt variants against all test cases.
 
         Args:
@@ -155,6 +153,10 @@ class ExperimentRunner:
     ) -> list[RunResult]:
         """Run a single prompt variant against all test cases with repetitions.
 
+        Uses asyncio.Semaphore for concurrent execution when max_concurrent_runs > 1.
+        Falls back to sequential execution when max_concurrent_runs == 1
+        (preserves deterministic behavior for testing).
+
         Args:
             experiment: The parent experiment.
             template: The prompt template variant.
@@ -163,6 +165,72 @@ class ExperimentRunner:
 
         Returns:
             List of RunResult objects for this variant.
+        """
+        max_concurrent = settings.max_concurrent_runs
+
+        if max_concurrent <= 1:
+            # Sequential execution (original behavior, deterministic)
+            return await self._run_variant_sequential(experiment, template, test_cases, eval_config)
+
+        # Concurrent execution with semaphore-based rate limiting
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def _gated_run(test_case, rep):
+            async with semaphore:
+                result = await self._execute_single_run(
+                    experiment_id=experiment.id,
+                    template=template,
+                    test_case=test_case,
+                    repetition=rep,
+                    eval_config=eval_config,
+                )
+                logger.debug(
+                    "run_completed",
+                    variant=template.name,
+                    test_case_id=test_case.id,
+                    repetition=rep,
+                    status=result.status.value,
+                    concurrent=True,
+                )
+                return result
+
+        # Build all tasks
+        tasks = [
+            _gated_run(test_case, rep)
+            for test_case in test_cases
+            for rep in range(1, eval_config.repetitions + 1)
+        ]
+
+        total = len(tasks)
+        logger.info(
+            "concurrent_execution_start",
+            variant=template.name,
+            total_runs=total,
+            max_concurrent=max_concurrent,
+        )
+
+        results = await asyncio.gather(*tasks)
+
+        logger.info(
+            "concurrent_execution_complete",
+            variant=template.name,
+            total_runs=total,
+            successes=sum(1 for r in results if r.status == RunStatus.SUCCESS),
+        )
+
+        return list(results)
+
+    async def _run_variant_sequential(
+        self,
+        experiment: Experiment,
+        template: PromptTemplate,
+        test_cases: list[TestCase],
+        eval_config,
+    ) -> list[RunResult]:
+        """Run variant sequentially (fallback when max_concurrent_runs == 1).
+
+        Preserves the original sequential behavior for deterministic testing
+        and environments where concurrent Ollama requests are not supported.
         """
         results: list[RunResult] = []
 
@@ -335,9 +403,7 @@ class ExperimentRunner:
         )
 
     @staticmethod
-    def _render_prompt(
-        template: str, variables: dict[str, str]
-    ) -> str:
+    def _render_prompt(template: str, variables: dict[str, str]) -> str:
         """Render a prompt template by substituting variables.
 
         Args:

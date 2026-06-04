@@ -26,12 +26,13 @@ import httpx
 import structlog
 
 from src.config import settings
+from src.models.providers.base import LLMProvider
 
 logger = structlog.get_logger(__name__)
 
 
-class OllamaClient:
-    """Async client for Ollama API with latency instrumentation and retry logic."""
+class OllamaProvider(LLMProvider):
+    """Async provider for Ollama API with latency instrumentation and retry logic."""
 
     def __init__(
         self,
@@ -231,9 +232,7 @@ class OllamaClient:
 
     # ─── Internal Helpers ─────────────────────────────────────────────────
 
-    async def _request_with_retry(
-        self, endpoint: str, payload: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _request_with_retry(self, endpoint: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Make an HTTP POST request with exponential backoff retry.
 
         Args:
@@ -256,7 +255,7 @@ class OllamaClient:
             except (httpx.HTTPStatusError, httpx.ConnectError, httpx.TimeoutException) as exc:
                 last_error = exc
                 if attempt < self.max_retries:
-                    wait_seconds = 2 ** attempt
+                    wait_seconds = 2**attempt
                     logger.warning(
                         "ollama_retry",
                         endpoint=endpoint,
@@ -266,6 +265,7 @@ class OllamaClient:
                         error=str(exc),
                     )
                     import asyncio
+
                     await asyncio.sleep(wait_seconds)
 
         logger.error("ollama_request_failed", endpoint=endpoint, error=str(last_error))
@@ -275,6 +275,7 @@ class OllamaClient:
     def _extract_json_from_text(text: str) -> dict[str, Any]:
         """Attempt to extract JSON from text that may contain markdown fences."""
         import re
+
         # Try to find JSON between ```json ... ``` fences
         match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
         if match:

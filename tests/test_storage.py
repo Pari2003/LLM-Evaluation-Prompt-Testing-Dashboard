@@ -172,9 +172,7 @@ def test_run_results_crud():
         assert len(results) == 2
 
         # Retrieve by variant
-        variant_results = db.get_variant_results(
-            experiment.id, experiment.prompt_templates[0].id
-        )
+        variant_results = db.get_variant_results(experiment.id, experiment.prompt_templates[0].id)
         assert len(variant_results) == 2
 
         # Run count
@@ -285,7 +283,7 @@ def main():
             print(f"  [FAIL] {test_fn.__name__}: {e}")
             failed += 1
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Storage Tests: {passed} passed, {failed} failed out of {len(tests)}")
 
     # Cleanup

@@ -8,16 +8,18 @@ The readiness probe verifies both database and Ollama connectivity.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from structlog import get_logger
 
 from src.api.dependencies import get_database, get_llm_client
-from src.models.llm_client import OllamaClient
+from src.models.providers.base import LLMProvider
 from src.storage.database import Database
 
-router = APIRouter(prefix="/api/v1/health", tags=["Health"])
+logger = get_logger(__name__)
+router = APIRouter(prefix="/health", tags=["System"])
 
 
-@router.get("/live")
-async def liveness():
+@router.get("/")
+async def health_check():
     """Liveness probe — always returns 200 if the process is running."""
     return {"status": "alive"}
 
@@ -25,9 +27,9 @@ async def liveness():
 @router.get("/ready")
 async def readiness(
     db: Database = Depends(get_database),
-    llm: OllamaClient = Depends(get_llm_client),
+    llm: LLMProvider = Depends(get_llm_client),
 ):
-    """Readiness probe — checks database and Ollama connectivity.
+    """Readiness probe — checks database and LLM connectivity.
 
     Returns:
         Dict with overall status and per-component health.
@@ -41,9 +43,9 @@ async def readiness(
     except Exception as exc:
         checks["database"] = f"error: {exc}"
 
-    # Ollama check
-    ollama_ok = await llm.health_check()
-    checks["ollama"] = "ok" if ollama_ok else "unreachable"
+    # LLM check
+    llm_ok = await llm.health_check()
+    checks["llm"] = "ok" if llm_ok else "unreachable"
 
     all_ok = all(v == "ok" for v in checks.values())
     return {

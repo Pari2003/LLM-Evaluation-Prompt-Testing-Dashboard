@@ -21,8 +21,8 @@ graph TD
     subgraph Execution ["2. Execution Engine"]
         EXP --> MATRIX["Build Matrix: variant × test_case × repetition"]
         MATRIX --> RENDER[Render Prompt Template]
-        RENDER --> OLLAMA[Send to Ollama / Llama 3.2]
-        OLLAMA --> RAW["Raw Response + Timing Metadata"]
+        RENDER --> LLM[Send to LLM Provider (Ollama/OpenAI)]
+        LLM --> RAW["Raw Response + Timing Metadata"]
     end
 
     subgraph Evaluation ["3. Five-Layer Evaluation Pipeline"]
@@ -68,19 +68,20 @@ Each generated response passes through five independent evaluation modules:
 - No additional LLM calls required (pure metric extraction)
 
 ### Layer 2: Token Analyzer
-- Counts `prompt_tokens` and `completion_tokens` from Ollama metadata
+- Counts `prompt_tokens` and `completion_tokens` from provider metadata
 - Computes `output_input_ratio` (completion / prompt)
 - Computes `verbosity_score` (response word count / reference word count)
 
 ### Layer 3: Semantic Scorer (Two Sub-Layers)
-- **Embedding Similarity**: Cosine similarity between response and reference embeddings via `nomic-embed-text`
-- **LLM-as-Judge**: Sends (question, response, reference) to Llama 3.2 with a structured rubric → returns `{relevance, correctness, coherence}` scores on a 1-5 scale
+- **Embedding Similarity**: Cosine similarity between response and reference embeddings
+- **LLM-as-Judge**: Sends (question, response, reference) to the configured LLM with a structured rubric → returns `{relevance, correctness, coherence}` scores on a 1-5 scale
 
-### Layer 4: Hallucination Checker
+### Layer 4: Hallucination Checker (3-Layer Approach)
 - Extracts atomic factual claims from the response via LLM
-- Verifies each claim against reference context using:
-  - Embedding similarity (cosine between claim and reference)
-  - Keyword/entity overlap (proper nouns and numbers)
+- Verifies each claim against reference context using a 3-layer method:
+  1. **Embedding Similarity** (cosine between claim and reference)
+  2. **Keyword Overlap** (proper nouns and numbers)
+  3. **NLI Entailment Check** (smart gated LLM check for semantic contradictions)
 - Reports per-claim verification and overall `hallucination_rate`
 
 ### Layer 5: Consistency Checker
@@ -118,6 +119,7 @@ composite = w_latency × latency_norm
 For each prompt variant across all test cases:
 - **Per-metric stats**: mean, median, stddev, min, max, p95
 - **Win-rate matrix**: For each pair of variants, which won more test cases (by embedding similarity)
+- **Significance Testing**: Welch's t-test and Cohen's d to determine if differences are statistically meaningful
 - **Rankings**: Variants sorted by average composite score (descending)
 
 ---
@@ -126,17 +128,18 @@ For each prompt variant across all test cases:
 
 * **Config & Schemas**:
   * [src/config.py](../src/config.py) — Central application configuration
-  * [src/models/schemas.py](../src/models/schemas.py) — 25+ Pydantic data models
-  * [src/models/llm_client.py](../src/models/llm_client.py) — Ollama client with latency instrumentation
+  * [src/models/schemas.py](../src/models/schemas.py) — 30+ Pydantic data models
+  * [src/models/providers/](../src/models/providers/) — LLM Provider abstraction
 * **Evaluation Layer**:
   * [src/evaluation/latency_analyzer.py](../src/evaluation/latency_analyzer.py) — Timing metrics
   * [src/evaluation/token_analyzer.py](../src/evaluation/token_analyzer.py) — Token efficiency
   * [src/evaluation/semantic_scorer.py](../src/evaluation/semantic_scorer.py) — Embedding + LLM-Judge
-  * [src/evaluation/hallucination_checker.py](../src/evaluation/hallucination_checker.py) — Claim verification
+  * [src/evaluation/hallucination_checker.py](../src/evaluation/hallucination_checker.py) — 3-Layer claim verification
   * [src/evaluation/consistency_checker.py](../src/evaluation/consistency_checker.py) — Cross-run stability
+  * [src/evaluation/significance.py](../src/evaluation/significance.py) — Welch's t-test and Cohen's d
   * [src/evaluation/composite_scorer.py](../src/evaluation/composite_scorer.py) — Weighted composite
 * **Execution Engine**:
-  * [src/execution/runner.py](../src/execution/runner.py) — Experiment orchestration
+  * [src/execution/runner.py](../src/execution/runner.py) — Async Experiment orchestration
   * [src/execution/result_aggregator.py](../src/execution/result_aggregator.py) — Statistical aggregation
 * **Storage**:
   * [src/storage/database.py](../src/storage/database.py) — SQLite with FTS5

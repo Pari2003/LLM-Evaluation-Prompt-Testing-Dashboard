@@ -18,16 +18,20 @@ import numpy as np
 import structlog
 
 from src.config import settings
-from src.models.llm_client import OllamaClient
+from src.models.providers.base import LLMProvider
 from src.models.schemas import ConsistencyReport
 
 logger = structlog.get_logger(__name__)
 
 
 class ConsistencyChecker:
-    """Evaluates response consistency across multiple runs of the same prompt+input."""
+    """Evaluates cross-run consistency of LLM responses.
 
-    def __init__(self, llm_client: OllamaClient):
+    Checks if repeated executions for the same prompt produce
+    semantically similar results, detecting flaky or unstable prompts.
+    """
+
+    def __init__(self, llm_client: LLMProvider):
         self.llm_client = llm_client
 
     async def check(self, responses: list[str]) -> ConsistencyReport:
@@ -74,9 +78,7 @@ class ConsistencyChecker:
 
         # ─── Semantic Drift (max deviation from centroid) ─────────────────
         centroid = np.mean(emb_matrix, axis=0)
-        distances_to_centroid = [
-            1.0 - self._cosine_similarity(emb, centroid) for emb in emb_matrix
-        ]
+        distances_to_centroid = [1.0 - self._cosine_similarity(emb, centroid) for emb in emb_matrix]
         semantic_drift = float(np.max(distances_to_centroid))
 
         # ─── Agreement Rate ───────────────────────────────────────────────
@@ -103,9 +105,7 @@ class ConsistencyChecker:
         return report
 
     @staticmethod
-    def _cosine_similarity(
-        vec_a: np.ndarray, vec_b: np.ndarray
-    ) -> float:
+    def _cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
         """Compute cosine similarity between two numpy vectors."""
         norm_a = np.linalg.norm(vec_a)
         norm_b = np.linalg.norm(vec_b)

@@ -19,8 +19,15 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables / .env file."""
 
+    # ─── Provider Configuration ───────────────────────────────────────────
+    llm_provider: str = "ollama"  # 'ollama', 'openai', 'groq', 'together'
+
     # ─── Ollama Configuration ─────────────────────────────────────────────
     ollama_base_url: str = "http://localhost:11434"
+
+    # ─── OpenAI-Compatible Configuration ──────────────────────────────────
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
     text_model: str = "llama3.2"
     embed_model: str = "nomic-embed-text"
     llm_temperature: float = 0.1

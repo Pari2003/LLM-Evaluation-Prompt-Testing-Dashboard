@@ -300,10 +300,13 @@ composite = 0.15 × latency + 0.10 × token_efficiency + 0.35 × semantic
 set PYTHONPATH=.              # Windows
 export PYTHONPATH=.           # macOS/Linux
 
-python -m tests.test_schemas       # 18 Pydantic model tests
+python -m tests.test_schemas       # 19 Pydantic model tests
 python -m tests.test_evaluation    # 8 evaluation module tests
 python -m tests.test_storage       # 5 SQLite CRUD + cascade tests
 python -m tests.test_execution     # 5 aggregation + ranking tests
+python -m tests.test_hallucination # 10 NLI entailment + 3-layer logic tests
+python -m tests.test_significance  # 10 Welch's t-test + Cohen's d tests
+python -m tests.test_concurrency   # 2 async Semaphore concurrency tests
 ```
 
 ---
@@ -311,15 +314,15 @@ python -m tests.test_execution     # 5 aggregation + ranking tests
 ## Known Limitations & Optimization Roadmap
 
 | # | Known Limitation | Planned Optimization |
-|:--|:---|:---|
-| 1 | **Single-model only** (Llama 3.2 via Ollama) | Add provider abstraction layer (OpenAI, Anthropic, Groq) via strategy pattern |
-| 2 | **Sequential execution** | Add `asyncio.Semaphore`-based concurrent execution |
-| 3 | **Embedding-only hallucination detection** | Port 3-layer detector from Agentic RAG (add NLI entailment) |
-| 4 | **SQLite storage** | Migration path to PostgreSQL with SQLAlchemy async |
-| 5 | **No streaming metrics** | Add SSE/WebSocket endpoint for live progress |
-| 6 | **LLM-as-Judge uses same model** | Support separate judge model config |
-| 7 | **No cost tracking** | Add token-to-cost mapping per provider |
-| 8 | **No statistical significance tests** | Add Welch's t-test / Mann-Whitney U |
+| :--- | :--- | :--- |
+| 1 | **Single-model only** (Llama 3.2 via Ollama) | ✅ **FIXED**: Added `LLMProvider` abstraction supporting OpenAI, Groq, Together, and Ollama. |
+| 2 | **Sequential execution** | ✅ **FIXED**: Implemented `asyncio.Semaphore` based concurrent execution. |
+| 3 | **Embedding-only hallucination detection** | ✅ **FIXED**: Added 3-Layer logic with NLI entailment and smart gating. |
+| 4 | **No statistical significance tests** | ✅ **FIXED**: Built Welch's t-test and Cohen's d effect size natively. |
+| 5 | **SQLite storage** | Migration path to PostgreSQL with SQLAlchemy async |
+| 6 | **No streaming metrics** | Add SSE/WebSocket endpoint for live progress |
+| 7 | **LLM-as-Judge uses same model** | Support separate judge model config |
+| 8 | **No cost tracking** | Add token-to-cost mapping per provider |
 
 ---
 
@@ -330,14 +333,15 @@ src/
 ├── config.py                    # Centralized Pydantic Settings
 ├── cli.py                       # Click + Rich CLI interface
 ├── models/
-│   ├── schemas.py               # 25+ Pydantic data models
-│   └── llm_client.py            # Ollama client with latency instrumentation
+│   ├── schemas.py               # 30+ Pydantic data models
+│   └── providers/               # LLM Provider abstraction (Ollama, OpenAI-compat)
 ├── evaluation/
 │   ├── latency_analyzer.py      # Timing metrics extraction
 │   ├── token_analyzer.py        # Token usage and efficiency
 │   ├── semantic_scorer.py       # Embedding similarity + LLM-as-Judge
-│   ├── hallucination_checker.py # Claim extraction and verification
+│   ├── hallucination_checker.py # 3-Layer NLI Claim Verification
 │   ├── consistency_checker.py   # Cross-run stability analysis
+│   ├── significance.py          # Welch's t-test and Cohen's d
 │   └── composite_scorer.py      # Weighted composite scoring
 ├── execution/
 │   ├── runner.py                # Experiment execution engine
